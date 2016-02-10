@@ -4,7 +4,6 @@ PATH
     translator (0.0.1)
       gengo (~> 0.1)
       rails (>= 4.0)
-      sqlite3
 
 GEM
   remote: https://rubygems.org/
@@ -90,6 +89,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  sqlite3
   translator!
 
 BUNDLED WITH
