@@ -116,14 +116,43 @@ module Translator
       (keys_1 - keys_2).map {|k| "#{to}.#{k}" }
     end
 
-    def self.read_orders
-      orders = []
-      if File.exists? translation_file
-        File.open translation_file do |file_handler|
-          orders = JSON.parse file_handler.read
-        end
+    class << self
+
+      def translation_file
+        Rails.root.join '.in_progress_translations'
       end
-      orders.map(&:symbolize_keys)
+
+      %w(FROM TO FILE).each do |param|
+
+        define_method param.downcase do
+          ENV[param]
+        end
+
+      end
+
+      def check_params *params
+        all_are_present = params.all? { |param| ENV[param].present? }
+        unless all_are_present
+          STDERR.puts "usage example: rake translator FROM=en TO=fr FILE=en_to_fr.translate"
+        end
+        all_are_present
+      end
+
+      def instance **params
+        new from: (params[:from] || from).to_sym,
+          to: (params[:to] || to).to_sym
+      end
+
+      def read_orders
+        orders = []
+        if File.exists? translation_file
+          File.open translation_file do |file_handler|
+            orders = JSON.parse file_handler.read
+          end
+        end
+        orders.map(&:symbolize_keys)
+      end
+
     end
 
   private
@@ -186,10 +215,6 @@ module Translator
           file_handler.write @orders.to_json
         end
       end
-    end
-
-    def self.translation_file
-      Rails.root.join '.in_progress_translations'
     end
 
   end

@@ -2,7 +2,10 @@ namespace :translator do
 
   desc 'Export missing translations for a specific locale'
   task export_keys: :environment do
-    next unless check_params 'FROM', 'TO'
+    next unless Translator::Translator.check_params 'FROM', 'TO'
+    from = Translator::Translator.from
+    to = Translator::Translator.to
+    translator = Translator::Translator.instance
     missing = translator.export_keys
     if missing.length > 0
       filename = "translate_#{from}_to_#{to}.txt"
@@ -17,44 +20,24 @@ namespace :translator do
 
   desc 'Import missing translations for a specific locale'
   task import_keys: :environment do
-    next unless check_params 'FROM', 'TO', 'FILE'
-    file_handler = File.open file
+    next unless Translator::Translator.check_params 'FROM', 'TO', 'FILE'
+    file_handler = File.open Translator::Translator.file
+    translator = Translator::Translator.instance
     translator.import_keys file_handler.read
     translator.write_locale_file
   end
 
   desc 'submits the translations to gengo'
   task submit_to_gengo: :environment do
-    next unless check_params 'FROM', 'TO'
-    translator.submit_to_gengo
+    next unless Translator::Translator.check_params 'FROM', 'TO'
+    Translator::Translator.instance.submit_to_gengo
   end
 
   desc 'fetches the translations from gengo'
   task fetch_from_gengo: :environment do
     Translator::Translator.read_orders.each do |order|
-      translator(order).fetch_from_gengo order[:id]
+      Translator::Translator.instance(order).fetch_from_gengo order[:id]
     end
-  end
-
-  %w(FROM TO FILE).each do |param|
-
-    define_method param.downcase do
-      ENV[param]
-    end
-
-  end
-
-  def check_params *params
-    all_are_present = params.all? { |param| ENV[param].present? }
-    unless all_are_present
-      STDERR.puts "usage example: rake translator FROM=en TO=fr FILE=en_to_fr.translate"
-    end
-    all_are_present
-  end
-
-  def translator **params
-    Translator::Translator.new from: (params[:from] || from).to_sym,
-      to: (params[:to] || to).to_sym
   end
 
 end
