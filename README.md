@@ -4,6 +4,41 @@ Utilities for import and exporting missing translations
 
 ## Usage
 
+### Adding it to your project
+
+```ruby
+#Gemfile
+gem 'translator',
+  git: 'git://github.com/bookingexperts/translator.git',
+  group: :development
+```
+
+### Submitting directly to Gengo
+
+If you define the following secrets, you can use the gem to submit the
+translations directly to Gengo and pull them back:
+
+```yaml
+development:
+  gengo_public_key: foo
+  gengo_private_key: bar
+```
+
+**pushing to Gengo**
+
+```bash
+rake translator:submit_to_gengo FROM=en TO=fr
+```
+
+**pulling from Gengo**
+
+```bash
+rake translator:fetch_from_gengo
+```
+
+If you want to have more control over what is being translated, you can export
+the keys manually and post them yourself.
+
 ### Export missing keys
 
 ```
