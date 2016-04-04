@@ -10,7 +10,7 @@ Utilities for import and exporting missing translations
 #Gemfile
 gem 'translator',
   git: 'git://github.com/bookingexperts/translator.git',
-  group: :development
+  group: [:development, :test]
 ```
 
 ### Submitting directly to Gengo
@@ -41,7 +41,7 @@ the keys manually and post them yourself.
 
 ### Export missing keys
 
-```
+```bash
 rake translator:export_keys FROM=en TO=fr
 ```
 
@@ -50,7 +50,7 @@ The keys are wrapped in a [[[key]]] block which ensures that translator won't tr
 
 ### Import keys
 
-```
+```bash
 rake translator:import_keys FROM=en TO=fr FILe=translate_nl_to_fr.txt
 ```
 
@@ -58,7 +58,7 @@ rake translator:import_keys FROM=en TO=fr FILe=translate_nl_to_fr.txt
 
 Create a test file and include the following code
 
-```
+```ruby
 require 'test_helper'
 
 class TranslatorTest < MiniTest::Unit::TestCase
@@ -70,4 +70,11 @@ class TranslatorTest < MiniTest::Unit::TestCase
     end
   end
 end
+```
+
+or you can test specific files like this:
+
+```ruby
+translator = Translator::Translator.new(from: origin_locale, to: target_locale)
+assert_empty translator.find_missing_keys(origin_file: origin_file, target_file: target_file)
 ```

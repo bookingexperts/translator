@@ -100,7 +100,7 @@ module Translator
     end
 
     def write_locale_file
-      old_yaml    = yaml(to)
+      old_yaml    = yaml(path(to))
       new_yaml    = deflatten_keys(@import)
       merged_yaml = old_yaml ? old_yaml.deep_merge(new_yaml) : new_yaml
       File.open(path(to), 'w') do |file|
@@ -108,9 +108,9 @@ module Translator
       end
     end
 
-    def find_missing_keys
-      yaml_1 = yaml(from)
-      yaml_2 = yaml(to)
+    def find_missing_keys origin_file: nil, target_file: nil
+      yaml_1 = yaml(origin_file || path(from))
+      yaml_2 = yaml(target_file || path(to))
       keys_1 = yaml_1.present? ? flatten_keys(yaml_1[yaml_1.keys.first]) : []
       keys_2 = yaml_2.present? ? flatten_keys(yaml_2[yaml_2.keys.first]) : []
       (keys_1 - keys_2).map {|k| "#{to}.#{k}" }
@@ -165,8 +165,8 @@ module Translator
       write_locale_file
     end
 
-    def yaml(locale)
-      YAML.load((File.open(path(locale)) rescue ''))
+    def yaml file_path
+      YAML.load((File.open(file_path) rescue ''))
     end
 
     def path(locale)
