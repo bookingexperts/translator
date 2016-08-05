@@ -1,3 +1,5 @@
+[![Build Status](https://semaphoreci.com/api/v1/bookingexperts/translator/branches/master/badge.svg)](https://semaphoreci.com/bookingexperts/translator)
+
 # Translator
 
 Utilities for import and exporting missing translations
