@@ -14,7 +14,7 @@ module Translator
       @from = options[:from]
       @to = options[:to]
       @comments = options[:comments]
-      @directory = options[:directory] || "config/locales/multilingual"
+      @directory = options[:directory] || Translator.dir || "config/locales/multilingual"
       @orders = self.class.read_orders
     end
 
@@ -122,7 +122,7 @@ module Translator
         Rails.root.join '.in_progress_translations'
       end
 
-      %w(FROM TO FILE).each do |param|
+      %w(FROM TO FILE DIR PREFIX).each do |param|
 
         define_method param.downcase do
           ENV[param]
@@ -133,7 +133,7 @@ module Translator
       def check_params *params
         all_are_present = params.all? { |param| ENV[param].present? }
         unless all_are_present
-          STDERR.puts "usage example: rake translator FROM=en TO=fr FILE=en_to_fr.translate"
+          STDERR.puts "usage example: rake translator FROM=en TO=fr DIR=\"config/locales\" PREFIX=activerecord FILE=en_to_fr.translate"
         end
         all_are_present
       end
@@ -170,7 +170,7 @@ module Translator
     end
 
     def path(locale)
-      File.expand_path("#{directory}/#{locale}.yml")
+      File.expand_path(File.join(directory, [Translator.prefix, locale, 'yml'].compact.join('.')))
     end
 
     def deflatten_keys(hash)
