@@ -145,7 +145,7 @@ module Translator
 
       def read_orders
         orders = []
-        if File.exists? translation_file
+        if File.exist? translation_file
           File.open translation_file do |file_handler|
             orders = JSON.parse file_handler.read
           end
