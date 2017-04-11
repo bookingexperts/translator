@@ -42,18 +42,25 @@ module Translator
     def fetch_from_gengo order_id
       order = gengo.getTranslationOrderJobs order_id: order_id
       job_ids = []
+      jobs_count = 0
       %w(
         jobs_available jobs_pending jobs_reviewable jobs_approved jobs_revising
       ).each do |list|
         job_ids.concat order['response']['order'][list]
       end
-      jobs = gengo.getTranslationJobs(ids: job_ids)['response']['jobs']
+
       @import = {}
-      jobs.each do |job|
-        next if job['body_tgt'].blank?
-        @import[job['custom_data']] = job['body_tgt']
+
+      job_ids.in_groups_of(50, false) do |job_ids|
+        jobs = gengo.getTranslationJobs(ids: job_ids)['response']['jobs']
+        jobs_count += jobs.size
+        jobs.each do |job|
+          next if job['body_tgt'].blank?
+          @import[job['custom_data']] = job['body_tgt']
+        end
       end
-      finalize_order order_id if @import.count == jobs.count
+
+      finalize_order order_id if @import.count == jobs_count
     end
 
     def gengo_jobs
