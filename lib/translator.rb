@@ -59,6 +59,7 @@ module Translator
     def gengo_jobs
       position_index = 0
       pairs = prepare_translations_for_missing_keys.map do |key, content|
+        next if content.blank?
         [
           key,
           {
@@ -76,7 +77,7 @@ module Translator
           }
         ]
       end
-      Hash[pairs]
+      Hash[pairs.compact]
     end
 
     def export_keys
