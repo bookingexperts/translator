@@ -22,7 +22,7 @@ module Translator
       I18n.with_locale(from) do
         result = {}
         find_missing_keys.each do |key|
-          result[key] = I18n.t(key.gsub("#{to}.", '')).to_s
+          result[key] = I18n.t(key.sub("#{to}.", '')).to_s
         end
         result
       end
