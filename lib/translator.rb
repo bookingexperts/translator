@@ -14,8 +14,7 @@ module Translator
       @from = options[:from]
       @to = options[:to]
       @comments = options[:comments]
-      @directory = options[:directory] || Translator.dir || "config/locales/multilingual"
-      @orders = self.class.read_orders
+      @directory = options[:directory] || Translator.default_dir
     end
 
     def prepare_translations_for_missing_keys
@@ -28,15 +27,20 @@ module Translator
       end
     end
 
-    def submit_to_gengo
+    def submit_to_gengo(dry_run: true)
       jobs = gengo_jobs
+
       if jobs.empty?
         puts "Nothing to translate from #{from} to #{to}"
         return
+      else
+        puts "Submitting: #{jobs.keys.join(', ')}"
       end
-      response = gengo.postTranslationJobs jobs: jobs
-      @orders << { id: response['response']['order_id'].to_i, to: to, from: from }
-      write_orders
+
+      unless dry_run
+        response = gengo.postTranslationJobs jobs: jobs
+        self.class.write_orders(new_orders: [{ id: response['response']['order_id'].to_i, to: to, from: from }])
+      end
     end
 
     def fetch_from_gengo order_id
@@ -93,6 +97,12 @@ module Translator
       end.join("\n")
     end
 
+    def import_file(filename)
+      file_handler = File.open(filename)
+      import_keys file_handler.read
+      write_locale_file
+    end
+
     def import_keys(import)
       matches = import.scan %r{
         \[\[\[           # key start brackets
@@ -126,6 +136,28 @@ module Translator
 
     class << self
 
+      def translators
+        result = []
+        if params_exist? 'FROM', 'TO'
+          result << instance
+        else
+          from = ENV['FROM'].presence || 'en'
+          (available_locales - [from]).each do |locale|
+            result << new(from: from, to: locale)
+          end
+        end
+
+        result
+      end
+
+      def default_dir
+        Translator.dir || 'config/locales/multilingual'
+      end
+
+      def available_locales dir = default_dir
+        Dir.glob(Rails.root.join("#{dir}/??.yml")).map{|file| File.basename(file, '.yml') }
+      end
+
       def translation_file
         Rails.root.join '.in_progress_translations'
       end
@@ -138,8 +170,12 @@ module Translator
 
       end
 
+      def params_exist? *params
+        params.all? { |param| ENV[param].present? }
+      end
+
       def check_params *params
-        all_are_present = params.all? { |param| ENV[param].present? }
+        all_are_present = params_exist?(*params)
         unless all_are_present
           STDERR.puts "usage example: rake translator FROM=en TO=fr DIR=\"config/locales\" PREFIX=activerecord FILE=en_to_fr.translate"
         end
@@ -161,15 +197,25 @@ module Translator
         orders.map(&:symbolize_keys)
       end
 
+      def write_orders new_orders: [], finished_orders: []
+        new_order_list = read_orders
+        new_order_list.reject! { |order| finished_orders.include?(order[:id]) }
+        new_order_list.concat(new_orders)
+
+        if new_order_list.empty?
+          File.unlink translation_file if File.exists? translation_file
+        else
+          File.open translation_file, 'w+' do |file_handler|
+            file_handler.write new_order_list.to_json
+          end
+        end
+      end
     end
 
   private
 
     def finalize_order order_id
-      @orders.reject! do |order|
-        order[:id] == order_id
-      end
-      write_orders
+      self.class.write_orders(finished_orders: [order_id])
       write_locale_file
     end
 
@@ -213,16 +259,6 @@ module Translator
 
     def translation_file
       self.class.translation_file
-    end
-
-    def write_orders
-      if @orders.empty?
-        File.unlink translation_file if File.exists? translation_file
-      else
-        File.open translation_file, 'w+' do |file_handler|
-          file_handler.write @orders.to_json
-        end
-      end
     end
 
   end

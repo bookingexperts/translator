@@ -2,52 +2,48 @@ namespace :translator do
 
   desc 'Export missing translations for a specific locale'
   task export_keys: :environment do
-    next unless Translator::Translator.check_params 'FROM', 'TO'
-    from = Translator::Translator.from
-    to = Translator::Translator.to
-    translator = Translator::Translator.instance
-    missing = translator.export_keys
-    if missing.length > 0
-      filename = "translate_#{from}_to_#{to}.txt"
-      filename = "#{Translator::Translator.prefix}_#{filename}" if Translator::Translator.prefix
-      File.open(filename, 'w') do |file_handler|
-        file_handler.write missing
+    Translator::Translator.translators.each do |translator|
+      missing = translator.export_keys
+      if missing.length > 0
+        filename = "translate_#{translator.from}_to_#{translator.to}.txt"
+        filename = "#{Translator::Translator.prefix}_#{filename}" if Translator::Translator.prefix
+        File.open(filename, 'w') do |file_handler|
+          file_handler.write missing
+        end
+        puts "Created export file: #{filename}"
+      else
+        puts "There are no missing translations from #{translator.from} to #{translator.to}"
       end
-      puts "Created export file: #{filename}"
-    else
-      puts "There are no missing translations from #{from} to #{to}"
     end
   end
 
   desc 'Import missing translations for a specific locale'
   task import_keys: :environment do
-    next unless Translator::Translator.check_params 'FROM', 'TO'
-
-    from = Translator::Translator.from
-    to = Translator::Translator.to
-    
-    filename = if Translator::Translator.file
-      Translator::Translator.file
-    else
-      possible_filename = "translate_#{from}_to_#{to}.txt"
-      possible_filename = "#{Translator::Translator.prefix}_#{possible_filename}" if Translator::Translator.prefix
-      possible_filename if File.exist?(possible_filename)
-    end
-    
-    if filename
-      file_handler = File.open filename
-      translator = Translator::Translator.instance
-      translator.import_keys file_handler.read
-      translator.write_locale_file
-    else
+    if filename = Translator::Translator.file
       Translator::Translator.check_params 'FROM', 'TO', 'FILE'
+      if File.exist?(filename)
+        translator = Translator::Translator.instance
+        translator.import_file(filename)
+      end
+    else
+      Translator::Translator.translators.each do |translator|
+        possible_filename = "translate_#{translator.from}_to_#{translator.to}.txt"
+        possible_filename = "#{Translator::Translator.prefix}_#{possible_filename}" if Translator::Translator.prefix
+        translator.import_file(possible_filename) if File.exist?(possible_filename)
+      end
     end
   end
 
   desc 'submits the translations to gengo'
   task submit_to_gengo: :environment do
-    next unless Translator::Translator.check_params 'FROM', 'TO'
-    Translator::Translator.instance.submit_to_gengo
+    dry_run = ENV['EXECUTE'] != '1'
+
+    Translator::Translator.translators.each do |translator|
+      translator.submit_to_gengo(dry_run: dry_run)
+    end
+
+    puts ''
+    puts "This is a dry-run, no Gengo jobs have been submitted! Specify EXECUTE=1 to force submission." if dry_run
   end
 
   desc 'fetches the translations from gengo'
