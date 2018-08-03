@@ -122,7 +122,7 @@ module Translator
       new_yaml    = deflatten_keys(@import)
       merged_yaml = old_yaml ? old_yaml.deep_merge(new_yaml) : new_yaml
       File.open(path(to), 'w') do |file|
-        file.write merged_yaml.to_yaml
+        file.write deep_sort_hash(merged_yaml).to_yaml
       end
     end
 
@@ -259,6 +259,16 @@ module Translator
 
     def translation_file
       self.class.translation_file
+    end
+
+    def deep_sort_hash(object)
+      if object.is_a?(Hash)
+        map = Hash.new
+        object.each {|k, v| map[k] = deep_sort_hash(v) }
+        Hash[map.sort { |a, b| a[0].to_s <=> b[0].to_s } ]
+      else
+        object
+      end
     end
 
   end
