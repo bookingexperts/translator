@@ -43,8 +43,12 @@ module Translator
       end
     end
 
+    def fetch_order order_id
+      gengo.getTranslationOrderJobs order_id: order_id
+    end
+
     def fetch_from_gengo order_id
-      order = gengo.getTranslationOrderJobs order_id: order_id
+      order = fetch_order order_id
       job_ids = []
       jobs_count = 0
       %w(
@@ -57,6 +61,13 @@ module Translator
 
       job_ids.in_groups_of(50, false) do |job_ids|
         jobs = gengo.getTranslationJobs(ids: job_ids)['response']['jobs']
+
+        # Duplicates are not translated
+        if jobs.any? { |job| job['status'] == 'duplicate' }
+          puts 'Found some duplicate jobs! These are skipped, as a translation will not be provided by Gengo.'
+          jobs = jobs.reject { |job| job['status'] == 'duplicate' }
+        end
+
         jobs_count += jobs.size
         jobs.each do |job|
           next if job['body_tgt'].blank?

@@ -53,4 +53,19 @@ namespace :translator do
     end
   end
 
+  desc 'fetches the current status of pending orders from gengo'
+  task status: :environment do
+    require 'pp'
+
+    Translator::Translator.read_orders.each do |order|
+      puts '===================================================='
+      puts ''
+      puts "Order #{order[:id]} (#{order[:from]}-#{order[:to]}):"
+      puts ''
+      pp Translator::Translator.instance(order).fetch_order(order[:id])
+      puts ''
+      puts '===================================================='
+      puts ''
+    end
+  end
 end
