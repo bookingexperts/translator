@@ -53,6 +53,13 @@ namespace :translator do
     end
   end
 
+  desc 'writes the locale file as is'
+  task write_locale_file: :environment do
+    Translator::Translator.translators.each do |translator|
+      translator.write_locale_file
+    end
+  end
+
   desc 'fetches the current status of pending orders from gengo'
   task status: :environment do
     require 'pp'
