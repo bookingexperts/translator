@@ -3,7 +3,7 @@ PATH
   specs:
     translator (0.0.1)
       gengo (~> 0.1)
-      rails (>= 4.0, < 5)
+      rails (>= 4.0, < 6)
 
 GEM
   remote: https://rubygems.org/
@@ -61,9 +61,9 @@ GEM
       nokogiri (>= 1.5.9)
     mail (2.7.0)
       mini_mime (>= 0.1.1)
-    mime-types (3.1)
+    mime-types (3.2.2)
       mime-types-data (~> 3.2015)
-    mime-types-data (3.2016.0521)
+    mime-types-data (3.2018.0812)
     mini_mime (1.0.0)
     mini_portile2 (2.3.0)
     minitest (5.11.3)
@@ -119,6 +119,7 @@ PLATFORMS
 
 DEPENDENCIES
   minitest-rails
+  rails
   sqlite3
   translator!
 

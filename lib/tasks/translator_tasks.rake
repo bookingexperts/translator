@@ -1,3 +1,5 @@
+require 'translator'
+
 namespace :translator do
 
   desc 'Export missing translations for a specific locale'
