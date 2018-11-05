@@ -3,9 +3,6 @@ require 'gengo'
 
 module Translator
 
-  class Engine < Rails::Engine
-  end
-
   class Translator
 
     attr_reader :from, :to, :directory, :comments
