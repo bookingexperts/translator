@@ -2,11 +2,11 @@ require 'test_helper'
 
 class TranslatorTest < ActiveSupport::TestCase
   include Translator::Assertions
-  
+
   setup do
     @translator = Translator::Translator.new(from: :en, to: :fr, dir: 'test/dummy/config/locales/multilingual')
   end
-  
+
   assert_no_missing_keys_for_available_locales
 
   it 'ensures export keys match import keys' do
@@ -26,17 +26,20 @@ class TranslatorTest < ActiveSupport::TestCase
       nl:
         messages:
           eat: poo
+          neat: poo
         messages:
           neat: poo
-          beat: mee
+          beat: |
+            Example 1: You know
+            Example 1: This is just text
         beat: pea
     EOS
 
     error = assert_raises RuntimeError do
       assert_no_duplicate_keys yaml, raise_error: true
     end
-    
-    assert_equal 'Duplicates found: [{"key":"__nl__messages","line":4}]', error.message
+
+    assert_equal 'Duplicates found: [{"key":"messages","occurrences":["line: 2","line: 5"]}]', error.message
   end
 
   it 'properly asserts translations without duplicates' do
@@ -53,8 +56,8 @@ class TranslatorTest < ActiveSupport::TestCase
         - peat
         - meat
     EOS
-    
-    assert_no_duplicate_keys yaml    
+
+    assert_no_duplicate_keys yaml
   end
 
 end
