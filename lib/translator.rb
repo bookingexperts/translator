@@ -1,5 +1,6 @@
 require 'yaml'
 require 'gengo'
+require 'translator/railtie'
 
 module Translator
 
