@@ -9,6 +9,8 @@ require 'pry'
 
 Rails.backtrace_cleaner.remove_silencers!
 
+I18n.load_path += Dir["#{File.dirname(__FILE__)}/dummy/config/locales/multilingual/*.yml"]
+
 # Load support files
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each { |f| require f }
 
