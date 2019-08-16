@@ -17,12 +17,11 @@ module Translator
 
     def prepare_translations_for_missing_keys
       I18n.with_locale(from) do
-        result =
-          find_missing_keys.each_with_object({}) do |key, hash|
-            hash[key] = I18n.t(key.sub("#{to}.", '')).to_s
-          end
-
-        wrap_interpolation_keys(result)
+        result = {}
+        find_missing_keys.each do |key|
+          result[key] = wrap_interpolation_keys(I18n.t(key.sub("#{to}.", '')).to_s)
+        end
+        result
       end
     end
 
@@ -123,7 +122,6 @@ module Translator
 
     def import_keys(import)
       import = unwrap_interpolation_keys(import)
-
       matches = import.scan %r{
         \[\[\[           # key start brackets
         ([^\]]+)         # key
@@ -270,10 +268,8 @@ module Translator
       prefix == "" ? keys.flatten : keys
     end
 
-    def wrap_interpolation_keys(hash)
-      hash.transform_values do |value|
-        value.gsub(/(%\{[^\}]+\})/m, '[[[\1]]]')
-      end
+    def wrap_interpolation_keys(string)
+      string.gsub(/(%\{[^\}]+\})/m, '[[[\1]]]')
     end
 
     def unwrap_interpolation_keys(string)

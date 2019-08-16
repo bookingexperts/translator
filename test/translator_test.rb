@@ -7,8 +7,6 @@ class TranslatorTest < ActiveSupport::TestCase
     @translator = Translator::Translator.new(from: :en, to: :fr, directory: 'test/dummy/config/locales/multilingual')
   end
 
-  assert_no_missing_keys_for_available_locales
-
   it 'ensures export keys match import keys' do
     export = @translator.export_keys
 
@@ -17,16 +15,11 @@ class TranslatorTest < ActiveSupport::TestCase
 
   it 'ensures export keys match import keys with translation' do
     export = @translator.export_keys
-
-    translations_for_missing_keys =
-      @translator.prepare_translations_for_missing_keys.transform_values do |value|
-        @translator.send(:unwrap_interpolation_keys, value)
-      end
-
-    assert_same_hash translations_for_missing_keys, @translator.import_keys(export)
+    assert_same_hash Hash[@translator.prepare_translations_for_missing_keys.map { |k, v| [k, @translator.send(:unwrap_interpolation_keys, v) ] }],
+      @translator.import_keys(export)
   end
 
-  it 'ensures export keys wrap and import keys unwrap interpolations in triple brackets' do
+  it 'ensures export keys wrap and unwrap interpolations in triple brackets' do
     export = @translator.export_keys
     assert_includes export, 'These translations are missing in [[[%{language}]]]'
     assert_equal 'These translations are missing in %{language}', @translator.import_keys(export)['fr.missing_translations.title']
