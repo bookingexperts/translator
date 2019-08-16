@@ -21,7 +21,7 @@ module Translator
       I18n.with_locale(from) do
         result = {}
         find_missing_keys.each do |key|
-          result[key] = I18n.t(key.sub("#{to}.", '')).to_s
+          result[key] = wrap_interpolation_keys(I18n.t(key.sub("#{to}.", '')).to_s)
         end
         result
       end
@@ -115,6 +115,7 @@ module Translator
     end
 
     def import_keys(import)
+      import = unwrap_interpolation_keys(import)
       matches = import.scan %r{
         \[\[\[           # key start brackets
         ([^\]]+)         # key
@@ -231,7 +232,7 @@ module Translator
     end
 
     def yaml file_path
-      YAML.load((File.open(file_path) rescue ''))
+      YAML.load((File.open(file_path)))
     end
 
     def path(locale)
@@ -259,6 +260,14 @@ module Translator
         end
       end
       prefix == "" ? keys.flatten : keys
+    end
+
+    def wrap_interpolation_keys(string)
+      string.gsub(/(%\{[^\}]+\})/m, '[[[\1]]]')
+    end
+
+    def unwrap_interpolation_keys(string)
+      string.gsub(/\[\[\[(%\{[^\}]+})\]\]\]/m, '\1')
     end
 
     def gengo
