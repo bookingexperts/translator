@@ -202,3 +202,9 @@ en:
       long: "%B %d, %Y %H:%M"
       short: "%d %b %H:%M"
     pm: pm
+  missing_translations:
+    title: "These translations are missing in %{language}"
+    body: |
+      So export these translations.
+
+      And let them be translated in %{language}.
