@@ -17,11 +17,12 @@ module Translator
 
     def prepare_translations_for_missing_keys
       I18n.with_locale(from) do
-        result = {}
-        find_missing_keys.each do |key|
-          result[key] = wrap_interpolation_keys(I18n.t(key.sub("#{to}.", '')).to_s)
-        end
-        result
+        result =
+          find_missing_keys.each_with_object({}) do |key, hash|
+            hash[key] = I18n.t(key.sub("#{to}.", '')).to_s
+          end
+
+        wrap_interpolation_keys(result)
       end
     end
 
@@ -41,17 +42,16 @@ module Translator
       end
     end
 
-    def fetch_order order_id
+    def fetch_order(order_id)
       gengo.getTranslationOrderJobs order_id: order_id
     end
 
-    def fetch_from_gengo order_id
+    def fetch_from_gengo(order_id)
       order = fetch_order order_id
       job_ids = []
       jobs_count = 0
-      %w(
-        jobs_available jobs_pending jobs_reviewable jobs_approved jobs_revising
-      ).each do |list|
+
+      %w[jobs_available jobs_pending jobs_reviewable jobs_approved jobs_revising].each do |list|
         job_ids.concat order['response']['order'][list]
       end
 
@@ -69,7 +69,8 @@ module Translator
         jobs_count += jobs.size
         jobs.each do |job|
           next if job['body_tgt'].blank?
-          @import[job['custom_data']] = job['body_tgt']
+
+          @import[job['custom_data']] = unwrap_interpolation_keys(job['body_tgt'])
         end
       end
 
@@ -78,8 +79,10 @@ module Translator
 
     def gengo_jobs
       position_index = 0
-      pairs = prepare_translations_for_missing_keys.map do |key, content|
+
+      prepare_translations_for_missing_keys.map do |key, content|
         next if content.blank?
+
         [
           key,
           {
@@ -96,8 +99,7 @@ module Translator
             slug: [Rails.application.class.parent_name, key].join(': ')
           }
         ]
-      end
-      Hash[pairs.compact]
+      end.compact.to_h
     end
 
     def export_keys
@@ -114,17 +116,18 @@ module Translator
 
     def import_keys(import)
       import = unwrap_interpolation_keys(import)
+
       matches = import.scan %r{
         \[\[\[           # key start brackets
         ([^\]]+)         # key
         \]\]\]           # key end brackets
         ((.(?!\[\[\[))*) # value until brackets
       }xm
-      @import = {}
-      matches.each do |match|
-        @import[match[0]] = match[1].to_s.lstrip
-      end
-      @import
+
+      @import =
+        matches.each_with_object({}) do |match, hash|
+          hash[match[0]] = match[1].to_s.lstrip
+        end
     end
 
     def write_locale_file
@@ -260,8 +263,10 @@ module Translator
       prefix == "" ? keys.flatten : keys
     end
 
-    def wrap_interpolation_keys(string)
-      string.gsub(/(%\{[^\}]+\})/m, '[[[\1]]]')
+    def wrap_interpolation_keys(hash)
+      hash.transform_values do |value|
+        value.gsub(/(%\{[^\}]+\})/m, '[[[\1]]]')
+      end
     end
 
     def unwrap_interpolation_keys(string)
