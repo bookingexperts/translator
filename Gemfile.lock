@@ -59,12 +59,8 @@ GEM
     loofah (2.2.2)
       crass (~> 1.0.2)
       nokogiri (>= 1.5.9)
-    m (1.5.1)
-      method_source (>= 0.6.7)
-      rake (>= 0.9.2.2)
     mail (2.7.0)
       mini_mime (>= 0.1.1)
-    method_source (0.9.2)
     mime-types (3.1)
       mime-types-data (~> 3.2015)
     mime-types-data (3.2016.0521)
@@ -122,7 +118,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  m
   minitest-rails
   sqlite3
   translator!
