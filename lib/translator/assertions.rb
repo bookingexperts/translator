@@ -14,7 +14,7 @@ module Translator
       end
     end
 
-    def assert_no_missing_keys from, to, origin_file: nil, target_file: nil
+    def assert_no_missing_keys(from, to, origin_file: nil, target_file: nil)
       translator = Translator.new(from: from, to: to)
       missing_keys = translator.find_missing_keys(origin_file: origin_file, target_file: target_file)
 
@@ -25,7 +25,7 @@ module Translator
       end
     end
 
-    def assert_no_duplicate_keys file_or_content, raise_error: true
+    def assert_no_duplicate_keys(file_or_content, raise_error: true)
       if (duplicates = duplicate_keys(file_or_content)).any?
         raise_error ? raise("Duplicates found: #{duplicates.to_json}") : flunk(duplicates)
       else
@@ -33,7 +33,35 @@ module Translator
       end
     end
 
+    def assert_no_missing_pluralizations(locale)
+      missing = missing_pluralizations(locale)
+      missing_message = missing.map { |key, missing_pluralizations| "- #{key}: #{missing_pluralizations.join(', ')}" }.join("\n")
+      assert(missing.empty?, "Missing pluralizations for locale #{locale}:\n#{missing_message}")
+    end
+
   private
+
+    def missing_pluralizations(locale, scope: '')
+      missing = {}
+
+      I18n.with_locale(locale) do
+        plural_keys = I18n.t('i18n.plural.keys')
+
+        (I18n.t(scope.presence || '.').keys - [:i18n]).each do |key|
+          scoped_key = scope.present? ? "#{scope}.#{key}" : key
+          value = I18n.t(scoped_key)
+          if value.is_a?(Hash) && value.key?(:one) && value.key?(:other)
+            if (missing_pluralizations = plural_keys - value.keys).any?
+              missing[scoped_key] = missing_pluralizations
+            end
+          elsif value.is_a?(Hash)
+            missing.merge!(missing_pluralizations(locale, scope: scoped_key))
+          end
+        end
+      end
+
+      missing
+    end
 
     def duplicate_keys? file_or_content
       duplicate_keys(file_or_content).any?
