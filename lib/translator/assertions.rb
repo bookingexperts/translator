@@ -45,13 +45,13 @@ module Translator
       missing = {}
 
       I18n.with_locale(locale) do
-        plural_keys = I18n.t('i18n.plural.keys')
+        plural_keys = I18n.t('i18n.plural.keys').map(&:to_s)
 
-        (I18n.t(scope.presence || '.').keys - [:i18n]).each do |key|
+        (I18n.t(scope.presence || '.').keys - [:i18n]).select(&:present?).each do |key|
           scoped_key = scope.present? ? "#{scope}.#{key}" : key
           value = I18n.t(scoped_key)
           if value.is_a?(Hash) && value.key?(:one) && value.key?(:other)
-            if (missing_pluralizations = plural_keys - value.keys).any?
+            if (missing_pluralizations = plural_keys - value.keys.map(&:to_s)).any?
               missing[scoped_key] = missing_pluralizations
             end
           elsif value.is_a?(Hash)
