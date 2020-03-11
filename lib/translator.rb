@@ -49,7 +49,7 @@ module Translator
     def fetch_from_gengo(order_id)
       order = fetch_order order_id
       job_ids = []
-      jobs_count = 0
+      jobs_count = order['response']['order']['total_jobs'].to_i
 
       %w[jobs_available jobs_pending jobs_reviewable jobs_approved jobs_revising].each do |list|
         job_ids.concat order['response']['order'][list]
