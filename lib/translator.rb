@@ -52,10 +52,14 @@ module Translator
       order = fetch_order order_id
       jobs_count = order['response']['order']['total_jobs'].to_i
 
-      pending_job_ids = order['response']['order']['jobs_pending']
+      pending_job_ids = []
       processed_job_ids = []
 
-      %w[jobs_available jobs_reviewable jobs_approved jobs_revising].each do |list|
+      %w[jobs_available jobs_pending].each do |list|
+        pending_job_ids.concat order['response']['order'][list]
+      end
+
+      %w[jobs_reviewable jobs_approved jobs_revising].each do |list|
         processed_job_ids.concat order['response']['order'][list]
       end
 
@@ -63,7 +67,7 @@ module Translator
 
       @import = {}
 
-      (pending_job_ids + processed_job_ids).in_groups_of(50, false) do |job_ids|
+      processed_job_ids.in_groups_of(50, false) do |job_ids|
         jobs = gengo.getTranslationJobs(ids: job_ids)['response']['jobs']
 
         # Duplicates are not translated
