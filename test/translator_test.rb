@@ -35,9 +35,12 @@ class TranslatorTest < ActiveSupport::TestCase
       nl:
         messages:
           eat: poo
+          neat: poo
         messages:
           neat: poo
-          beat: mee
+          beat: |
+            Example 1: You know
+            Example 1: This is just text
         beat: pea
     EOS
 
@@ -45,7 +48,7 @@ class TranslatorTest < ActiveSupport::TestCase
       assert_no_duplicate_keys yaml, raise_error: true
     end
 
-    assert_equal 'Duplicates found: [{"key":"__nl__messages","line":4}]', error.message
+    assert_equal 'Duplicates found: [{"key":"messages","occurrences":["line: 2","line: 5"]}]', error.message
   end
 
   it 'properly asserts translations without duplicates' do

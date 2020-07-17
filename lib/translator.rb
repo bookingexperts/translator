@@ -1,10 +1,8 @@
 require 'yaml'
 require 'gengo'
+require 'translator/railtie'
 
 module Translator
-
-  class Engine < Rails::Engine
-  end
 
   class Translator
 
@@ -50,17 +48,11 @@ module Translator
 
     def fetch_from_gengo(order_id)
       order = fetch_order order_id
+      job_ids = []
       jobs_count = order['response']['order']['total_jobs'].to_i
 
-      pending_job_ids = []
-      processed_job_ids = []
-
-      %w[jobs_available jobs_pending].each do |list|
-        pending_job_ids.concat order['response']['order'][list]
-      end
-
-      %w[jobs_reviewable jobs_approved jobs_revising].each do |list|
-        processed_job_ids.concat order['response']['order'][list]
+      %w[jobs_available jobs_pending jobs_reviewable jobs_approved jobs_revising].each do |list|
+        job_ids.concat order['response']['order'][list]
       end
 
       puts "Order ##{order_id}: #{jobs_count} jobs enqueued, #{processed_job_ids.size} processable, #{pending_job_ids.size} pending"

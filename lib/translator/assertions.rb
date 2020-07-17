@@ -14,7 +14,7 @@ module Translator
       end
     end
 
-    def assert_no_missing_keys from, to, origin_file: nil, target_file: nil
+    def assert_no_missing_keys(from, to, origin_file: nil, target_file: nil)
       translator = Translator.new(from: from, to: to)
       missing_keys = translator.find_missing_keys(origin_file: origin_file, target_file: target_file)
 
@@ -25,7 +25,7 @@ module Translator
       end
     end
 
-    def assert_no_duplicate_keys file_or_content, raise_error: true
+    def assert_no_duplicate_keys(file_or_content, raise_error: true)
       if (duplicates = duplicate_keys(file_or_content)).any?
         raise_error ? raise("Duplicates found: #{duplicates.to_json}") : flunk(duplicates)
       else
@@ -45,13 +45,13 @@ module Translator
       missing = {}
 
       I18n.with_locale(locale) do
-        plural_keys = I18n.t('i18n.plural.keys').map(&:to_s)
+        plural_keys = I18n.t('i18n.plural.keys')
 
-        (I18n.t(scope.presence || '.').keys - [:i18n]).select(&:present?).each do |key|
+        (I18n.t(scope.presence || '.').keys - [:i18n]).each do |key|
           scoped_key = scope.present? ? "#{scope}.#{key}" : key
           value = I18n.t(scoped_key)
           if value.is_a?(Hash) && value.key?(:one) && value.key?(:other)
-            if (missing_pluralizations = plural_keys - value.keys.map(&:to_s)).any?
+            if (missing_pluralizations = plural_keys - value.keys).any?
               missing[scoped_key] = missing_pluralizations
             end
           elsif value.is_a?(Hash)
@@ -68,40 +68,30 @@ module Translator
     end
 
     def duplicate_keys file_or_content
-      content = file_or_content.is_a?(File) ? file_or_content.read : file_or_content
-      duplicates        = []
-      keys              = []
-      current_indenting = 0
-      parent_key        = ''
-      content.split(/\n/).each_with_index do |line, num|
-        spaces, key   = line.scan(/(^\s*)(.*):/).first
-        next if spaces.nil? and key.nil?
-        next if key.strip == '-'
-        next if key.strip == '<<'
-        indenting = spaces.length
-        if indenting > current_indenting
-          parent_key = keys.last
-          current_indenting = indenting
-        elsif indenting < current_indenting
-          parts = parent_key.split('__')
-          steps_back = ((current_indenting - indenting) / 2)
-          steps_back.times do
-            parts.pop
+      yaml = file_or_content.is_a?(File) ? file_or_content.read : file_or_content
+      duplicate_keys = []
+
+      validator = ->(node) do
+        if node.is_a?(Psych::Nodes::Mapping)
+          duplicates = node.children.select.with_index { |_, i| i.even? }.group_by { |child| child.value }.select { |value, nodes| nodes.size > 1 }
+          duplicates.each do |key, nodes|
+            duplicate_key = {
+              file: (file_or_content.path if file_or_content.is_a?(File)),
+              key: key,
+              occurrences: nodes.map { |occurrence| "line: #{occurrence.start_line + 1}" }
+            }.compact
+
+            duplicate_keys << duplicate_key
           end
-          parent_key = parts.join('__')
-          current_indenting = indenting
         end
-        full_key = "#{parent_key}__#{key}"
-        if keys.include? full_key
-          duplicate = { key: full_key, line: (num + 1) }
-          duplicate[:file] = file_or_content.path if file_or_content.is_a?(File)
-          duplicates << duplicate
-        else
-          keys << full_key
-        end
+
+        node.children.to_a.each { |child| validator.call(child) }
       end
 
-      duplicates
+      ast = Psych.parse_stream(yaml)
+      validator.call(ast)
+
+      duplicate_keys
     end
 
   end
