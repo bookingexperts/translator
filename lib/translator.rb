@@ -90,6 +90,14 @@ module Translator
       prepare_translations_for_missing_keys.map do |key, content|
         next if content.blank?
 
+        slug =
+          if Rails::VERSION::MAJOR >= 6
+            [Rails.application.class.module_parent_name, key].join(': ')
+          else
+            [Rails.application.class.parent_name, key].join(': ')
+          end
+
+
         [
           key,
           {
@@ -103,7 +111,7 @@ module Translator
             type: 'text',
             as_group: 1,
             position: (position_index += 1),
-            slug: [Rails.application.class.parent_name, key].join(': ')
+            slug: slug
           }
         ]
       end.compact.to_h
