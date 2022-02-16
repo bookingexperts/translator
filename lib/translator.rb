@@ -38,7 +38,7 @@ module Translator
 
       unless dry_run
         response = gengo.postTranslationJobs jobs: jobs
-        self.class.write_orders(new_orders: [{ id: response['response']['order_id'].to_i, to: to, from: from }])
+        self.class.write_orders(new_orders: [{ id: response['response']['order_id'].to_i, to: to, from: from, prefix: prefix }])
       end
     end
 
@@ -222,6 +222,8 @@ module Translator
             orders = JSON.parse file_handler.read
           end
         end
+
+        orders.reject! { |order| order[:prefix] != prefix  }
         orders.map(&:symbolize_keys)
       end
 
