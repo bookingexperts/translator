@@ -38,7 +38,7 @@ module Translator
 
       unless dry_run
         response = gengo.postTranslationJobs jobs: jobs
-        self.class.write_orders(new_orders: [{ id: response['response']['order_id'].to_i, to: to, from: from, prefix: prefix }])
+        self.class.write_orders(new_orders: [{ id: response['response']['order_id'].to_i, to: to, from: from, prefix: Translator.prefix }])
       end
     end
 
