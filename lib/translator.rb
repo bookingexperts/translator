@@ -293,8 +293,8 @@ module Translator
     def gengo
       Gengo::API.new api_version: '2',
         sandbox: false,
-        public_key: Rails.application.secrets.gengo_public_key,
-        private_key: Rails.application.secrets.gengo_private_key
+        public_key: Rails.application.credentials.gengo_public_key,
+        private_key: Rails.application.credentials.gengo_private_key
     end
 
     def translation_file
