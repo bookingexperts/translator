@@ -157,8 +157,8 @@ module Translator
     def find_missing_keys origin_file: nil, target_file: nil
       yaml_1 = yaml(origin_file || path(from))
       yaml_2 = yaml(target_file || path(to))
-      keys_1 = yaml_1.present? ? flatten_keys(yaml_1[yaml_1.keys.first]) : []
-      keys_2 = yaml_2.present? ? flatten_keys(yaml_2[yaml_2.keys.first]) : []
+      keys_1 = yaml_1.present? ? flatten_keys(yaml_1[yaml_1.keys.first] || {}) : []
+      keys_2 = yaml_2.present? ? flatten_keys(yaml_2[yaml_2.keys.first] || {}) : []
       (keys_1 - keys_2).map {|k| "#{to}.#{k}" }
     end
 
