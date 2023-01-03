@@ -3,7 +3,6 @@ require 'gengo'
 require 'translator/railtie'
 
 module Translator
-
   class Translator
 
     attr_reader :from, :to, :directory, :comments
@@ -97,6 +96,15 @@ module Translator
             [Rails.application.class.parent_name, key].join(': ')
           end
 
+        # Gengo has only support for the 'no' language code instead of the widely used 'nb' code
+        # So we transform the code here, just before sending it to gengo
+        # These lines can be removed in the future if gengo supports the nb locale code. 
+        # (a request has been send to gengo for this feature.)
+        lc_src = from
+        lc_src = 'no' if lc_src == 'nb'
+        lc_tgt = to
+        lc_tgt = 'no' if lc_tgt == 'nb'
+
 
         [
           key,
@@ -104,8 +112,8 @@ module Translator
             body_src: content,
             force: 0,
             comment: comments,
-            lc_src: from,
-            lc_tgt: to,
+            lc_src: lc_src,
+            lc_tgt: lc_tgt,
             tier: 'standard',
             custom_data: key,
             type: 'text',
@@ -146,10 +154,17 @@ module Translator
     end
 
     def write_locale_file
-      old_yaml    = yaml(path(to))
+      # Gengo has only support for the 'no' language code instead of the widely used 'nb' code
+      # So we transform the code here, just before sending it to gengo
+      # These lines can be removed in the future if gengo supports the nb locale code. 
+      # (a request has been send to gengo for this feature.
+      target_locale = to
+      target_locale = 'no' if target_locale == 'nb'
+
+      old_yaml    = yaml(path(target_locale))
       new_yaml    = @import ? deflatten_keys(@import) : {}
       merged_yaml = old_yaml ? old_yaml.deep_merge(new_yaml) : new_yaml
-      File.open(path(to), 'w') do |file|
+      File.open(path(target_locale), 'w') do |file|
         file.write deep_sort_hash(merged_yaml).to_yaml
       end
     end
@@ -312,5 +327,4 @@ module Translator
     end
 
   end
-
 end
