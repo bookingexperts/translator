@@ -22,7 +22,7 @@ blocks:
       prologue:
         commands:
           - checkout
-          - sem-version ruby 2.6.3
+          - sem-version ruby 2.7.6
           - cache restore
           - bundle config --local path 'vendor/bundle'
           - bundle config --local github.https 'true'
