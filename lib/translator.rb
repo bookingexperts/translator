@@ -98,13 +98,18 @@ module Translator
 
         # Gengo has only support for the 'no' language code instead of the widely used 'nb' code
         # So we transform the code here, just before sending it to gengo
-        # These lines can be removed in the future if gengo supports the nb locale code. 
+        # These lines can be removed in the future if gengo supports the nb locale code.
         # (a request has been send to gengo for this feature.)
         lc_src = from
         lc_src = 'no' if lc_src == 'nb'
         lc_tgt = to
         lc_tgt = 'no' if lc_tgt == 'nb'
 
+        if key.split('.').last == 'formal'
+          comments ||= 'Please translate this using formal and professional language.'
+        elsif key.split('.').last == 'informal'
+          comments ||= 'Please translate this using informal and casual language.'
+        end
 
         [
           key,
@@ -156,7 +161,7 @@ module Translator
     def write_locale_file
       # Gengo has only support for the 'no' language code instead of the widely used 'nb' code
       # So we transform the code here, just before sending it to gengo
-      # These lines can be removed in the future if gengo supports the nb locale code. 
+      # These lines can be removed in the future if gengo supports the nb locale code.
       # (a request has been send to gengo for this feature.
       target_locale = to
       target_locale = 'no' if target_locale == 'nb'
