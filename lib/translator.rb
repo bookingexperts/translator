@@ -25,8 +25,8 @@ module Translator
       end
     end
 
-    def submit_to_gengo(dry_run: true)
-      jobs = gengo_jobs
+    def submit_to_gengo(dry_run: true, pro_tier: false)
+      jobs = gengo_jobs(pro_tier: pro_tier)
 
       if jobs.empty?
         puts "Nothing to translate from #{from} to #{to}"
@@ -83,7 +83,7 @@ module Translator
       finalize_order order_id if @import.count == jobs_count
     end
 
-    def gengo_jobs
+    def gengo_jobs(pro_tier: false)
       position_index = 0
 
       prepare_translations_for_missing_keys.map do |key, content|
@@ -111,6 +111,8 @@ module Translator
           comments ||= 'Please translate this using informal and casual language.'
         end
 
+        tier = pro_tier ? 'pro' : 'standard'
+
         [
           key,
           {
@@ -119,7 +121,7 @@ module Translator
             comment: comments,
             lc_src: lc_src,
             lc_tgt: lc_tgt,
-            tier: 'standard',
+            tier: tier,
             custom_data: key,
             type: 'text',
             as_group: 1,
