@@ -39,14 +39,15 @@ namespace :translator do
   desc 'submits the translations to gengo'
   task submit_to_gengo: :environment do
     dry_run = ENV['EXECUTE'] != '1'
-    pro_tier = ENV['PRO'] == '1'
+    pro_tier = ENV['CHEAP'] != '1'
 
     Translator::Translator.translators.each do |translator|
       translator.submit_to_gengo(dry_run: dry_run, pro_tier: pro_tier)
     end
 
     puts ''
-    puts "This is a dry-run, no Gengo jobs have been submitted! Specify EXECUTE=1 to force submission. Specify PRO=1 to have gengo translate it at a higher tier." if dry_run
+    puts "This is a dry-run, no Gengo jobs have been submitted! Specify EXECUTE=1 to force submission." if dry_run
+    puts "Requesting translations on the pro-tier. Specify CHEAP=1 if you want cheaper translations by using the standard tier." if pro_tier
   end
 
   desc 'fetches the translations from gengo'
